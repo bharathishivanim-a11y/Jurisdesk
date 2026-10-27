@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JurisDesk – AI-Powered Legal Case System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0f1c2e;--navy-mid:#162236;--navy-light:#1e3050;--navy-card:#1a2d45;
+  --gold:#c9a84c;--gold-light:#e8c97a;--gold-dim:#8a6e30;--gold-bg:#fdf6e3;
+  --cream:#f5f0e8;--cream-dark:#e8e0d0;
+  --text-dark:#0f1c2e;--text-muted:#5a6a80;--text-light:#8a9ab0;
+  --white:#ffffff;--sidebar-w:248px;
+  --danger:#c0392b;--success:#1a6b3c;--warning:#9a6e10;--info:#1a4a7a;
+  --danger-bg:#fdf0ee;--success-bg:#edf7f2;--warning-bg:#fdf6e8;--info-bg:#eef4fc;
+  --border:#ddd5c5;--radius:10px;--radius-lg:14px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text-dark);display:flex;min-height:100vh;font-size:14px;line-height:1.5}
+
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar-w);background:var(--navy);min-height:100vh;position:fixed;top:0;left:0;display:flex;flex-direction:column;z-index:100}
+.sidebar-logo{padding:26px 22px 18px;border-bottom:1px solid rgba(255,255,255,0.07)}
+.sidebar-logo .wordmark{font-family:'DM Serif Display',serif;font-size:23px;color:var(--gold-light);line-height:1}
+.sidebar-logo .wordmark span{color:rgba(255,255,255,0.5)}
+.sidebar-logo .tagline{font-size:10.5px;color:rgba(255,255,255,0.32);margin-top:4px;letter-spacing:0.9px;text-transform:uppercase}
+.sidebar-nav{flex:1;padding:16px 0;overflow-y:auto}
+.nav-section-label{font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,0.28);padding:14px 22px 5px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 22px;color:rgba(255,255,255,0.55);cursor:pointer;transition:all .15s;font-size:13px;font-weight:400;border-left:3px solid transparent}
+.nav-item:hover{background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.88)}
+.nav-item.active{background:rgba(201,168,76,0.13);color:var(--gold-light);border-left-color:var(--gold);font-weight:500}
+.nav-item .nicon{font-size:16px;flex-shrink:0;width:20px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--gold);color:var(--navy);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;line-height:1.5}
+.nav-badge.ai{background:linear-gradient(135deg,#6c3dab,#3d6be8);color:#fff}
+.sidebar-footer{padding:14px 22px;border-top:1px solid rgba(255,255,255,0.07)}
+.user-card{display:flex;align-items:center;gap:10px}
+.user-avatar{width:34px;height:34px;border-radius:50%;background:var(--gold-dim);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--gold-light);flex-shrink:0;letter-spacing:.5px}
+.user-info .name{font-size:13px;color:rgba(255,255,255,0.85);font-weight:500}
+.user-info .role{font-size:11px;color:rgba(255,255,255,0.32)}
+
+/* ── MAIN ── */
+.main{margin-left:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.topbar-title{font-family:'DM Serif Display',serif;font-size:18px;color:var(--text-dark)}
+.breadcrumb{font-size:12px;color:var(--text-light)}
+.topbar-actions{display:flex;align-items:center;gap:10px}
+.search-wrap{position:relative}
+.search-input{background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:7px 12px 7px 34px;font-size:13px;color:var(--text-dark);font-family:'DM Sans',sans-serif;width:220px;outline:none;transition:border .15s,width .2s}
+.search-input:focus{border-color:var(--navy);width:280px}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--text-light);pointer-events:none}
+.search-results{position:absolute;top:38px;left:0;width:320px;background:var(--white);border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(15,28,46,.12);z-index:200;display:none;max-height:280px;overflow-y:auto}
+.search-results.open{display:block}
+.search-result-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--cream-dark);display:flex;align-items:center;gap:10px;transition:background .1s}
+.search-result-item:hover{background:var(--cream)}
+.search-result-item:last-child{border-bottom:none}
+.sri-id{font-size:11px;color:var(--text-light);min-width:110px}
+.sri-title{font-size:13px;color:var(--text-dark);font-weight:500}
+.sri-type{font-size:11px;padding:2px 8px;border-radius:10px;margin-left:auto;flex-shrink:0}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 15px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;border:none;font-family:'DM Sans',sans-serif}
+.btn-primary{background:var(--navy);color:var(--gold-light)}
+.btn-primary:hover{background:var(--navy-light)}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text-muted)}
+.btn-ghost:hover{background:var(--cream)}
+.btn-ai{background:linear-gradient(135deg,#1a1040,#1e3a6e);color:#c8d8ff;border:none}
+.btn-ai:hover{background:linear-gradient(135deg,#221355,#254585)}
+.btn-sm{padding:5px 11px;font-size:12px}
+.btn-danger{background:var(--danger-bg);color:var(--danger);border:1px solid #f0c0bb}
+.btn-success{background:var(--success-bg);color:var(--success);border:1px solid #b0d8bf}
+
+/* ── PAGES ── */
+.page{display:none;flex-direction:column;flex:1}
+.page.active{display:flex}
+.page-body{padding:26px 28px;flex:1}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px;display:flex;align-items:flex-start;justify-content:space-between;transition:box-shadow .15s}
+.stat-card:hover{box-shadow:0 4px 16px rgba(15,28,46,.08)}
+.stat-card .label{font-size:11px;color:var(--text-light);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
+.stat-card .value{font-family:'DM Serif Display',serif;font-size:30px;color:var(--text-dark);line-height:1}
+.stat-card .change{font-size:11.5px;margin-top:3px}
+.stat-card .change.up{color:var(--success)}.stat-card .change.down{color:var(--danger)}
+.stat-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.si-navy{background:var(--navy);color:var(--gold-light)}
+.si-gold{background:#fdf3d8;color:var(--gold-dim)}
+.si-green{background:var(--success-bg);color:var(--success)}
+.si-red{background:var(--danger-bg);color:var(--danger)}
+
+/* ── GRID ── */
+.content-grid{display:grid;grid-template-columns:1fr 330px;gap:18px}
+.right-col{display:flex;flex-direction:column;gap:18px}
+
+/* ── PANEL ── */
+.panel{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.panel-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+.panel-title{font-family:'DM Serif Display',serif;font-size:15.5px}
+.filter-tabs{display:flex;gap:3px}
+.filter-tab{padding:5px 11px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--text-muted);font-weight:500;transition:all .15s}
+.filter-tab.active{background:var(--navy);color:var(--gold-light)}
+.filter-tab:not(.active):hover{background:var(--cream)}
+
+table{width:100%;border-collapse:collapse}
+thead th{padding:10px 14px;text-align:left;font-size:10.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--text-light);background:var(--cream);font-weight:500;border-bottom:1px solid var(--border)}
+tbody tr{transition:background .1s;cursor:pointer}
+tbody tr:hover td{background:#f9f7f2}
+tbody tr:not(:last-child) td{border-bottom:1px solid var(--cream-dark)}
+td{padding:12px 14px;font-size:13px;vertical-align:middle}
+.case-id{font-weight:600;color:var(--navy);font-size:11.5px;letter-spacing:.3px}
+.case-title{font-weight:500;color:var(--text-dark)}
+.case-client{font-size:12px;color:var(--text-muted);margin-top:1px}
+.status-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.2px}
+.status-active{background:var(--info-bg);color:var(--info)}
+.status-hearing{background:var(--warning-bg);color:var(--warning)}
+.status-closed{background:var(--success-bg);color:var(--success)}
+.status-pending{background:#f3f0ff;color:#5a3a9a}
+.priority-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}
+.ph{background:var(--danger)}.pm{background:var(--warning)}.pl{background:var(--success)}
+
+/* ── HEARING ITEMS ── */
+.hearing-item{display:flex;gap:13px;padding:13px 18px;align-items:flex-start}
+.hearing-item:not(:last-child){border-bottom:1px solid var(--cream-dark)}
+.hearing-date{flex-shrink:0;width:44px;text-align:center;background:var(--cream);border-radius:8px;padding:6px 4px}
+.hearing-date .day{font-family:'DM Serif Display',serif;font-size:21px;color:var(--navy);line-height:1}
+.hearing-date .month{font-size:10px;text-transform:uppercase;color:var(--text-light);letter-spacing:.5px;margin-top:2px}
+.hearing-info .htitle{font-size:13px;font-weight:500;color:var(--text-dark)}
+.hearing-info .hmeta{font-size:11.5px;color:var(--text-muted);margin-top:2px}
+.hearing-info .hcourt{font-size:11px;color:var(--text-light);margin-top:1px}
+
+/* ── DOC ITEMS ── */
+.doc-item{display:flex;align-items:center;gap:11px;padding:11px 18px}
+.doc-item:not(:last-child){border-bottom:1px solid var(--cream-dark)}
+.doc-icon{font-size:21px;color:var(--text-light);flex-shrink:0}
+.doc-info .dname{font-size:13px;font-weight:500;color:var(--text-dark)}
+.doc-info .dmeta{font-size:11px;color:var(--text-light);margin-top:1px}
+.doc-action{margin-left:auto;color:var(--text-light);font-size:15px;cursor:pointer;padding:4px}
+.doc-action:hover{color:var(--navy)}
+
+/* ── MODAL ── */
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(15,28,46,.5);z-index:200;align-items:center;justify-content:center}
+.modal-backdrop.open{display:flex}
+.modal{background:var(--white);border-radius:16px;width:580px;max-width:96vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(15,28,46,.22)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:20px 26px 16px;border-bottom:1px solid var(--border)}
+.modal-title{font-family:'DM Serif Display',serif;font-size:18px}
+.modal-close{cursor:pointer;color:var(--text-light);font-size:19px;line-height:1}
+.modal-close:hover{color:var(--text-dark)}
+.modal-body{padding:22px 26px}
+.modal-footer{padding:14px 26px 20px;display:flex;justify-content:flex-end;gap:10px;border-top:1px solid var(--border)}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:11.5px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.form-input,.form-select,.form-textarea{width:100%;padding:9px 13px;border:1px solid var(--border);border-radius:8px;font-size:13.5px;font-family:'DM Sans',sans-serif;color:var(--text-dark);background:var(--white);outline:none;transition:border .15s}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--navy)}
+.form-textarea{resize:vertical;min-height:80px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+
+/* ── DRAWER ── */
+.drawer-backdrop{display:none;position:fixed;inset:0;background:rgba(15,28,46,.35);z-index:200}
+.drawer-backdrop.open{display:block}
+.drawer{position:fixed;top:0;right:0;width:500px;max-width:96vw;height:100vh;background:var(--white);box-shadow:-4px 0 40px rgba(15,28,46,.15);z-index:201;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease}
+.drawer.open{transform:translateX(0)}
+.drawer-header{padding:22px 26px 16px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between}
+.drawer-body{padding:22px 26px;flex:1;overflow-y:auto}
+.drawer-section{margin-bottom:22px}
+.drawer-section-title{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--text-light);font-weight:600;margin-bottom:11px;padding-bottom:7px;border-bottom:1px solid var(--cream-dark)}
+.detail-row{display:flex;justify-content:space-between;margin-bottom:9px;font-size:13px}
+.detail-key{color:var(--text-muted)}.detail-value{font-weight:500;text-align:right;max-width:250px}
+.timeline-item{display:flex;gap:11px;margin-bottom:13px}
+.timeline-dot{width:8px;height:8px;border-radius:50%;background:var(--navy);flex-shrink:0;margin-top:4px}
+.timeline-text{font-size:13px;color:var(--text-dark)}
+.timeline-date{font-size:11px;color:var(--text-light);margin-top:2px}
+
+/* ── AI WIN PROBABILITY ── */
+.win-prob-card{background:linear-gradient(135deg,#0f1c2e,#1e3050);border-radius:var(--radius-lg);padding:20px 22px;color:var(--white);position:relative;overflow:hidden}
+.win-prob-card::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:rgba(201,168,76,.08);border-radius:50%}
+.win-prob-card::after{content:'';position:absolute;bottom:-20px;right:20px;width:80px;height:80px;background:rgba(201,168,76,.05);border-radius:50%}
+.wpc-label{font-size:11px;text-transform:uppercase;letter-spacing:.9px;color:rgba(255,255,255,.45);margin-bottom:10px}
+.wpc-score-row{display:flex;align-items:flex-end;gap:10px;margin-bottom:14px}
+.wpc-score{font-family:'DM Serif Display',serif;font-size:52px;line-height:1;color:var(--gold-light)}
+.wpc-pct{font-size:18px;color:rgba(255,255,255,.5);padding-bottom:8px}
+.wpc-verdict{font-size:13px;color:rgba(255,255,255,.7);margin-bottom:16px;line-height:1.5}
+.wpc-bar-wrap{background:rgba(255,255,255,.1);border-radius:6px;height:8px;margin-bottom:14px;overflow:hidden}
+.wpc-bar{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--gold-dim),var(--gold-light));transition:width .8s ease}
+.wpc-factors{display:flex;flex-direction:column;gap:6px}
+.wpc-factor{display:flex;align-items:center;gap:8px;font-size:12px;color:rgba(255,255,255,.6)}
+.wpc-factor-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.wpc-loading{text-align:center;padding:24px 0;color:rgba(255,255,255,.5);font-size:13px}
+.wpc-spinner{display:inline-block;width:20px;height:20px;border:2px solid rgba(255,255,255,.15);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:8px}
+
+/* ── LAWYER SUGGESTIONS ── */
+.lawyer-card{display:flex;gap:13px;padding:13px 0;border-bottom:1px solid var(--cream-dark);align-items:flex-start}
+.lawyer-card:last-child{border-bottom:none;padding-bottom:0}
+.lawyer-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;letter-spacing:.5px}
+.la-blue{background:#dce8fc;color:#1a4a7a}
+.la-green{background:#d8f0e4;color:#1a5a30}
+.la-purple{background:#ebe0fc;color:#4a2a8a}
+.la-amber{background:#fceedd;color:#8a4a10}
+.lawyer-info .lname{font-size:13.5px;font-weight:600;color:var(--text-dark)}
+.lawyer-info .lspec{font-size:12px;color:var(--text-muted);margin-top:1px}
+.lawyer-info .lstats{display:flex;gap:10px;margin-top:5px}
+.lstat{font-size:11px;color:var(--text-light)}
+.lstat strong{color:var(--text-dark);font-weight:600}
+.lawyer-match{margin-left:auto;text-align:center;flex-shrink:0}
+.match-pct{font-family:'DM Serif Display',serif;font-size:19px;color:var(--navy)}
+.match-label{font-size:10px;color:var(--text-light);letter-spacing:.4px;text-transform:uppercase}
+.lawyer-loading{text-align:center;padding:20px;color:var(--text-muted);font-size:13px}
+.lawyer-spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--cream-dark);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle}
+
+/* ── AI CHATBOT ── */
+.chat-fab{position:fixed;bottom:28px;right:28px;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#1a1040,#1e3a6e);color:#c8d8ff;font-size:22px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 20px rgba(30,58,110,.35);z-index:150;border:none;transition:transform .15s,box-shadow .15s}
+.chat-fab:hover{transform:scale(1.07);box-shadow:0 6px 28px rgba(30,58,110,.45)}
+.chat-fab .badge{position:absolute;top:6px;right:6px;width:10px;height:10px;background:#e8c97a;border-radius:50%;border:2px solid #1a1040}
+
+.chat-panel{position:fixed;bottom:88px;right:28px;width:360px;height:480px;background:var(--white);border-radius:16px;box-shadow:0 12px 50px rgba(15,28,46,.22);z-index:151;display:flex;flex-direction:column;transform:scale(.9) translateY(20px);opacity:0;pointer-events:none;transition:all .2s ease;border:1px solid var(--border)}
+.chat-panel.open{transform:scale(1) translateY(0);opacity:1;pointer-events:all}
+.chat-header{background:linear-gradient(135deg,#0f1c2e,#1e3050);padding:14px 18px;border-radius:16px 16px 0 0;display:flex;align-items:center;gap:10px}
+.chat-avatar{width:32px;height:32px;border-radius:50%;background:rgba(201,168,76,.25);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.chat-header-info .chat-name{font-size:14px;font-weight:600;color:var(--white)}
+.chat-header-info .chat-status{font-size:11px;color:rgba(255,255,255,.45)}
+.chat-close{margin-left:auto;color:rgba(255,255,255,.5);cursor:pointer;font-size:17px;line-height:1}
+.chat-close:hover{color:var(--white)}
+.chat-messages{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.chat-msg{max-width:84%;display:flex;flex-direction:column;gap:3px}
+.chat-msg.bot{align-self:flex-start}
+.chat-msg.user{align-self:flex-end}
+.msg-bubble{padding:9px 13px;border-radius:12px;font-size:13px;line-height:1.55}
+.bot .msg-bubble{background:var(--cream);color:var(--text-dark);border-radius:4px 12px 12px 12px}
+.user .msg-bubble{background:var(--navy);color:rgba(255,255,255,.9);border-radius:12px 12px 4px 12px}
+.msg-time{font-size:10.5px;color:var(--text-light)}
+.user .msg-time{text-align:right}
+.chat-typing{display:flex;gap:4px;align-items:center;padding:8px 13px;background:var(--cream);border-radius:4px 12px 12px 12px;width:fit-content}
+.typing-dot{width:6px;height:6px;border-radius:50%;background:var(--text-light);animation:typingBounce 1.2s infinite}
+.typing-dot:nth-child(2){animation-delay:.2s}
+.typing-dot:nth-child(3){animation-delay:.4s}
+.chat-input-wrap{padding:10px 14px 12px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center}
+.chat-input{flex:1;border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;font-family:'DM Sans',sans-serif;outline:none;color:var(--text-dark);transition:border .15s}
+.chat-input:focus{border-color:var(--navy)}
+.chat-send{width:34px;height:34px;border-radius:8px;background:var(--navy);color:var(--gold-light);border:none;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:background .15s;flex-shrink:0}
+.chat-send:hover{background:var(--navy-light)}
+.chat-suggestions{display:flex;flex-wrap:wrap;gap:5px;padding:0 14px 10px}
+.chat-suggestion{padding:4px 10px;border-radius:6px;background:var(--cream);border:1px solid var(--border);font-size:11.5px;color:var(--text-muted);cursor:pointer;transition:all .15s}
+.chat-suggestion:hover{background:var(--gold-bg);border-color:var(--gold);color:var(--text-dark)}
+
+/* ── ANALYTICS PAGE ── */
+.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.analytics-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:18px}
+.chart-panel{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px 20px}
+.chart-panel-title{font-family:'DM Serif Display',serif;font-size:14.5px;margin-bottom:4px}
+.chart-panel-sub{font-size:11.5px;color:var(--text-light);margin-bottom:16px}
+.chart-wrap{position:relative;height:200px}
+
+/* ── AI INSIGHTS BANNER ── */
+.ai-insight{background:linear-gradient(135deg,#0f1c2e 0%,#162d50 100%);border-radius:var(--radius-lg);padding:18px 22px;display:flex;align-items:center;gap:16px;margin-bottom:18px}
+.ai-insight-icon{font-size:26px;flex-shrink:0}
+.ai-insight-text .ai-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--gold);font-weight:600;margin-bottom:4px}
+.ai-insight-text p{font-size:13px;color:rgba(255,255,255,.8);line-height:1.55}
+.ai-insight-text strong{color:var(--gold-light)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--navy);color:var(--cream);padding:11px 20px;border-radius:10px;font-size:13px;display:flex;align-items:center;gap:9px;z-index:300;opacity:0;transition:all .25s;white-space:nowrap;box-shadow:0 4px 20px rgba(15,28,46,.3)}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast .tick{color:var(--gold-light)}
+
+/* ── LOGIN ── */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--navy);position:fixed;inset:0;z-index:999}
+.login-card{background:var(--white);border-radius:18px;padding:42px 38px;width:400px;max-width:94vw}
+.login-logo{font-family:'DM Serif Display',serif;font-size:28px;color:var(--navy);margin-bottom:5px}
+.login-logo span{color:var(--gold)}
+.login-sub{font-size:12.5px;color:var(--text-light);margin-bottom:28px}
+.login-role-tabs{display:flex;background:var(--cream);border-radius:8px;padding:3px;margin-bottom:20px;gap:3px}
+.role-tab{flex:1;text-align:center;padding:8px;border-radius:6px;font-size:13px;cursor:pointer;color:var(--text-muted);font-weight:500;transition:all .15s}
+.role-tab.active{background:var(--white);color:var(--navy);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.login-submit{width:100%;padding:12px;background:var(--navy);color:var(--gold-light);font-size:14px;font-weight:600;border:none;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:8px;transition:background .15s}
+.login-submit:hover{background:var(--navy-light)}
+.login-divider{text-align:center;font-size:11.5px;color:var(--text-light);margin:14px 0}
+
+/* ── ANIMATIONS ── */
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes typingBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fade-up{animation:fadeUp .3s ease forwards}
+
+/* ── PILL TAG ── */
+.tag{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:600}
+.tag-civil{background:#e8f0fc;color:#1a4080}
+.tag-criminal{background:#fce8e8;color:#802020}
+.tag-family{background:#f0e8fc;color:#502080}
+.tag-labour{background:#e8fce8;color:#206020}
+.tag-consumer{background:#fce8f8;color:#802060}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-page" id="loginPage">
+  <div class="login-card">
+    <div class="login-logo">Juris<span>Desk</span></div>
+    <div class="login-sub">AI-Powered Legal Case Tracking System</div>
+    <div class="login-role-tabs">
+      <div class="role-tab active" onclick="selectRole(this,'Advocate')">Advocate</div>
+      <div class="role-tab" onclick="selectRole(this,'Client')">Client</div>
+      <div class="role-tab" onclick="selectRole(this,'Admin')">Admin</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <input class="form-input" type="email" value="adv.sharma@court.in">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" type="password" value="••••••••">
+    </div>
+    <button class="login-submit" id="loginBtn" onclick="doLogin()">Sign In as Advocate</button>
+    <div class="login-divider">Secured · Bar Council Authentication</div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="wordmark">Juris<span>Desk</span></div>
+    <div class="tagline">Legal Case System</div>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section-label">Main</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)"><span class="nicon">⊞</span>Dashboard</div>
+    <div class="nav-item" onclick="showPage('cases',this)"><span class="nicon">⚖</span>Cases<span class="nav-badge">24</span></div>
+    <div class="nav-item" onclick="showPage('hearings',this)"><span class="nicon">📅</span>Hearings<span class="nav-badge">3</span></div>
+    <div class="nav-item" onclick="showPage('documents',this)"><span class="nicon">📁</span>Documents</div>
+    <div class="nav-section-label">AI Features</div>
+    <div class="nav-item" onclick="showPage('analytics',this)"><span class="nicon">📊</span>Analytics<span class="nav-badge ai">AI</span></div>
+    <div class="nav-item" onclick="showPage('predict',this)"><span class="nicon">🎯</span>Win Predictor<span class="nav-badge ai">AI</span></div>
+    <div class="nav-item" onclick="showPage('lawyers',this)"><span class="nicon">👨‍⚖️</span>Find Lawyers<span class="nav-badge ai">AI</span></div>
+    <div class="nav-section-label">Manage</div>
+    <div class="nav-item" onclick="showPage('clients',this)"><span class="nicon">👤</span>Clients</div>
+    <div class="nav-item" onclick="showPage('settings',this)"><span class="nicon">⚙</span>Settings</div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar">AS</div>
+      <div class="user-info"><div class="name">Adv. A. Sharma</div><div class="role">Senior Advocate</div></div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-title" id="pageTitle">Dashboard</div>
+    </div>
+    <div class="topbar-actions">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="searchInput" placeholder="Search cases, clients…" oninput="doSearch(this.value)" onfocus="doSearch(this.value)" onblur="setTimeout(()=>closeSearch(),200)">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <button class="btn btn-ai" onclick="openChat()">⚡ Ask JurisAI</button>
+      <button class="btn btn-primary" onclick="openNewCaseModal()">+ New Case</button>
+    </div>
+  </div>
+
+  <!-- ══ DASHBOARD ══ -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-body">
+      <div class="ai-insight fade-up">
+        <div class="ai-insight-icon">🤖</div>
+        <div class="ai-insight-text">
+          <div class="ai-label">JurisAI Insight</div>
+          <p>You have <strong>3 hearings this week</strong>. Case CIV/2024/0841 has a <strong>74% win probability</strong> based on precedent analysis. Consider filing the amended petition before 27 May.</p>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="flex-shrink:0;color:#c8d8ff;border-color:rgba(255,255,255,.2)" onclick="openChat()">Ask AI →</button>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div><div class="label">Active Cases</div><div class="value">18</div><div class="change up">↑ 3 this month</div></div><div class="stat-icon si-navy">⚖</div></div>
+        <div class="stat-card"><div><div class="label">Upcoming Hearings</div><div class="value">7</div><div class="change">Next: 27 May</div></div><div class="stat-icon si-gold">📅</div></div>
+        <div class="stat-card"><div><div class="label">Closed This Year</div><div class="value">41</div><div class="change up">↑ 12% vs last year</div></div><div class="stat-icon si-green">✓</div></div>
+        <div class="stat-card"><div><div class="label">Pending Documents</div><div class="value">5</div><div class="change down">Needs attention</div></div><div class="stat-icon si-red">⚠</div></div>
+      </div>
+      <div class="content-grid">
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Recent Cases</div>
+            <div class="filter-tabs">
+              <div class="filter-tab active" onclick="filterTab(this)">All</div>
+              <div class="filter-tab" onclick="filterTab(this)">Active</div>
+              <div class="filter-tab" onclick="filterTab(this)">Hearing</div>
+              <div class="filter-tab" onclick="filterTab(this)">Closed</div>
+            </div>
+          </div>
+          <table>
+            <thead><tr><th>Case ID</th><th>Title / Client</th><th>Type</th><th>Status</th><th>Next Date</th><th>Win%</th></tr></thead>
+            <tbody id="caseTableBody">
+              <tr onclick="openDrawer('CIV/2024/0841','Property Dispute vs. Mehta Bros','Civil','Hearing','Rajesh Kumar','74')">
+                <td><div class="case-id">CIV/2024/0841</div></td>
+                <td><div class="case-title">Property Dispute vs. Mehta Bros</div><div class="case-client">Rajesh Kumar</div></td>
+                <td><span class="tag tag-civil">Civil</span></td>
+                <td><span class="status-badge status-hearing">Hearing</span></td>
+                <td>27 May 2025</td>
+                <td><span style="font-weight:600;color:var(--success)">74%</span></td>
+              </tr>
+              <tr onclick="openDrawer('CRM/2024/0317','State v. Accused Sec. 420','Criminal','Active','Priya Nair','58')">
+                <td><div class="case-id">CRM/2024/0317</div></td>
+                <td><div class="case-title">State v. Accused in Section 420</div><div class="case-client">Priya Nair</div></td>
+                <td><span class="tag tag-criminal">Criminal</span></td>
+                <td><span class="status-badge status-active">Active</span></td>
+                <td>02 Jun 2025</td>
+                <td><span style="font-weight:600;color:var(--warning)">58%</span></td>
+              </tr>
+              <tr onclick="openDrawer('FAM/2024/0156','Divorce Petition','Family','Pending','Anita Verma','82')">
+                <td><div class="case-id">FAM/2024/0156</div></td>
+                <td><div class="case-title">Divorce Petition – Mutual Consent</div><div class="case-client">Anita Verma</div></td>
+                <td><span class="tag tag-family">Family</span></td>
+                <td><span class="status-badge status-pending">Pending</span></td>
+                <td>10 Jun 2025</td>
+                <td><span style="font-weight:600;color:var(--success)">82%</span></td>
+              </tr>
+              <tr onclick="openDrawer('LAB/2024/0499','Wrongful Termination – ABC Corp','Labour','Active','Suresh Pillai','61')">
+                <td><div class="case-id">LAB/2024/0499</div></td>
+                <td><div class="case-title">Wrongful Termination – ABC Corp</div><div class="case-client">Suresh Pillai</div></td>
+                <td><span class="tag tag-labour">Labour</span></td>
+                <td><span class="status-badge status-active">Active</span></td>
+                <td>15 Jun 2025</td>
+                <td><span style="font-weight:600;color:var(--warning)">61%</span></td>
+              </tr>
+              <tr onclick="openDrawer('CRM/2025/0012','Cyber Fraud Complaint','Criminal','Active','Meera Iyer','69')">
+                <td><div class="case-id">CRM/2025/0012</div></td>
+                <td><div class="case-title">Cyber Fraud Complaint</div><div class="case-client">Meera Iyer</div></td>
+                <td><span class="tag tag-criminal">Criminal</span></td>
+                <td><span class="status-badge status-active">Active</span></td>
+                <td>20 Jun 2025</td>
+                <td><span style="font-weight:600;color:var(--warning)">69%</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="right-col">
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Upcoming Hearings</div><div style="font-size:12px;color:var(--text-light);cursor:pointer" onclick="showPage('hearings',null)">View all →</div></div>
+            <div class="hearing-item"><div class="hearing-date"><div class="day">27</div><div class="month">May</div></div><div class="hearing-info"><div class="htitle">Property Dispute vs. Mehta Bros</div><div class="hmeta">10:30 AM · Court Room 4</div><div class="hcourt">Madras High Court</div></div></div>
+            <div class="hearing-item"><div class="hearing-date"><div class="day">02</div><div class="month">Jun</div></div><div class="hearing-info"><div class="htitle">State v. Accused Sec. 420</div><div class="hmeta">2:00 PM · Court Room 11</div><div class="hcourt">City Sessions Court</div></div></div>
+            <div class="hearing-item"><div class="hearing-date"><div class="day">10</div><div class="month">Jun</div></div><div class="hearing-info"><div class="htitle">Divorce Petition</div><div class="hmeta">11:00 AM · Family Court 2</div><div class="hcourt">Family Court, Chennai</div></div></div>
+          </div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">Recent Documents</div><button class="btn btn-ghost btn-sm" onclick="showToast('Upload dialog opened')">+ Upload</button></div>
+            <div class="doc-item"><div class="doc-icon">📄</div><div class="doc-info"><div class="dname">Vakalatnama_Kumar.pdf</div><div class="dmeta">CIV/2024/0841 · 24 May</div></div><div class="doc-action" onclick="event.stopPropagation();showToast('Downloading…')">⬇</div></div>
+            <div class="doc-item"><div class="doc-icon">📄</div><div class="doc-info"><div class="dname">Chargesheet_420.pdf</div><div class="dmeta">CRM/2024/0317 · 22 May</div></div><div class="doc-action" onclick="event.stopPropagation();showToast('Downloading…')">⬇</div></div>
+            <div class="doc-item"><div class="doc-icon">📋</div><div class="doc-info"><div class="dname">Marriage_Certificate.jpg</div><div class="dmeta">FAM/2024/0156 · 20 May</div></div><div class="doc-action" onclick="event.stopPropagation();showToast('Downloading…')">⬇</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ANALYTICS ══ -->
+  <div class="page" id="page-analytics">
+    <div class="page-body">
+      <div class="ai-insight fade-up">
+        <div class="ai-insight-icon">📈</div>
+        <div class="ai-insight-text">
+          <div class="ai-label">AI Analytics Summary</div>
+          <p>Win rate is up <strong>8% this quarter</strong>. Civil cases perform best at <strong>76% success</strong>. Your highest-risk active cases are in the Criminal category — consider additional documentation.</p>
+        </div>
+      </div>
+      <div class="analytics-grid">
+        <div class="chart-panel"><div class="chart-panel-title">Cases by Type</div><div class="chart-panel-sub">Distribution across active cases</div><div class="chart-wrap"><canvas id="chartType"></canvas></div></div>
+        <div class="chart-panel"><div class="chart-panel-title">Monthly Case Filings</div><div class="chart-panel-sub">Jan – May 2025</div><div class="chart-wrap"><canvas id="chartMonthly"></canvas></div></div>
+      </div>
+      <div class="analytics-grid">
+        <div class="chart-panel"><div class="chart-panel-title">Win Rate by Case Type</div><div class="chart-panel-sub">Based on closed cases (2024–25)</div><div class="chart-wrap"><canvas id="chartWinRate"></canvas></div></div>
+        <div class="chart-panel"><div class="chart-panel-title">Case Status Overview</div><div class="chart-panel-sub">Current portfolio breakdown</div><div class="chart-wrap"><canvas id="chartStatus"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ WIN PREDICTOR ══ -->
+  <div class="page" id="page-predict">
+    <div class="page-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+        <div>
+          <div class="panel" style="margin-bottom:18px">
+            <div class="panel-header"><div class="panel-title">⚖ Case Win Probability Predictor</div></div>
+            <div style="padding:20px 22px">
+              <div class="form-group">
+                <label class="form-label">Case Type</label>
+                <select class="form-select" id="pred-type">
+                  <option value="">Select case type…</option>
+                  <option>Civil – Property</option><option>Civil – Contract</option>
+                  <option>Criminal – Section 420</option><option>Criminal – Section 302</option>
+                  <option>Family – Divorce</option><option>Family – Custody</option>
+                  <option>Labour – Wrongful Termination</option><option>Consumer – Deficiency of Service</option>
+                  <option>Writ – Mandamus</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Court</label>
+                <select class="form-select" id="pred-court">
+                  <option value="">Select court…</option>
+                  <option>Supreme Court of India</option><option>Madras High Court</option>
+                  <option>Bombay High Court</option><option>Delhi High Court</option>
+                  <option>City Sessions Court</option><option>Family Court, Chennai</option>
+                  <option>District Consumer Forum</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Evidence Strength</label>
+                <select class="form-select" id="pred-evidence">
+                  <option value="">Rate evidence…</option>
+                  <option>Strong – Documents, witnesses, forensics</option>
+                  <option>Moderate – Some documents, one witness</option>
+                  <option>Weak – Circumstantial only</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Prior Hearings / Adjournments</label>
+                <select class="form-select" id="pred-hearings">
+                  <option value="">Select…</option>
+                  <option>First hearing</option><option>1–3 hearings, no adjournments</option>
+                  <option>Multiple adjournments – both parties</option>
+                  <option>Multiple adjournments – opposing party</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Case Summary (optional)</label>
+                <textarea class="form-textarea" id="pred-summary" placeholder="Describe the case facts briefly for a more precise prediction…"></textarea>
+              </div>
+              <button class="btn btn-ai" style="width:100%;justify-content:center;padding:11px" onclick="runPrediction()">🎯 Predict Win Probability</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="win-prob-card" id="winProbCard">
+            <div class="wpc-label">AI Win Probability Analysis</div>
+            <div id="winProbContent" style="text-align:center;padding:40px 0;color:rgba(255,255,255,.4);font-size:13px">
+              Fill in the case details and click Predict to see AI-powered win probability analysis.
+            </div>
+          </div>
+          <div class="panel" style="margin-top:18px" id="lawyerSuggestPanel">
+            <div class="panel-header"><div class="panel-title">👨‍⚖️ Recommended Lawyers</div><div style="font-size:11px;color:var(--text-light)">AI-matched for this case</div></div>
+            <div style="padding:16px 20px;color:var(--text-muted);font-size:13px;text-align:center" id="lawyerSuggestContent">
+              Run the win predictor to get AI-matched lawyer recommendations.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ FIND LAWYERS ══ -->
+  <div class="page" id="page-lawyers">
+    <div class="page-body">
+      <div class="panel" style="margin-bottom:20px">
+        <div class="panel-header"><div class="panel-title">🤖 AI Lawyer Matcher</div></div>
+        <div style="padding:18px 22px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:flex-end">
+            <div class="form-group" style="margin:0">
+              <label class="form-label">Case Type</label>
+              <select class="form-select" id="lawyer-type"><option value="">Any type</option><option>Civil</option><option>Criminal</option><option>Family</option><option>Labour</option><option>Consumer</option><option>Writ / PIL</option></select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="form-label">City</label>
+              <select class="form-select" id="lawyer-city"><option>Chennai</option><option>Mumbai</option><option>Delhi</option><option>Bangalore</option><option>Hyderabad</option></select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="form-label">Experience</label>
+              <select class="form-select" id="lawyer-exp"><option value="">Any</option><option>5+ years</option><option>10+ years</option><option>15+ years</option></select>
+            </div>
+            <button class="btn btn-ai" style="height:38px" onclick="findLawyers()">Find Lawyers</button>
+          </div>
+        </div>
+      </div>
+      <div id="lawyerResults">
+        <div style="text-align:center;padding:40px;color:var(--text-muted)">Use the filters above and click Find Lawyers to get AI-matched recommendations.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CASES PAGE ══ -->
+  <div class="page" id="page-cases">
+    <div class="page-body">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">All Cases</div>
+          <div style="display:flex;gap:8px">
+            <div class="filter-tabs"><div class="filter-tab active" onclick="filterTab(this)">All</div><div class="filter-tab" onclick="filterTab(this)">Active</div><div class="filter-tab" onclick="filterTab(this)">Hearing</div><div class="filter-tab" onclick="filterTab(this)">Closed</div></div>
+            <button class="btn btn-primary btn-sm" onclick="openNewCaseModal()">+ New Case</button>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>Case ID</th><th>Title / Client</th><th>Type</th><th>Court</th><th>Status</th><th>Next Date</th><th>Win%</th><th></th></tr></thead>
+          <tbody>
+            <tr onclick="openDrawer('CIV/2024/0841','Property Dispute vs. Mehta Bros','Civil','Rajesh Kumar','74')"><td><div class="case-id">CIV/2024/0841</div></td><td><div class="case-title">Property Dispute vs. Mehta Bros</div><div class="case-client">Rajesh Kumar</div></td><td><span class="tag tag-civil">Civil</span></td><td style="font-size:12px;color:var(--text-muted)">Madras HC</td><td><span class="status-badge status-hearing">Hearing</span></td><td>27 May</td><td><span style="font-weight:600;color:var(--success)">74%</span></td><td><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();showPage('predict',null)">Predict</button></td></tr>
+            <tr onclick="openDrawer('CRM/2024/0317','State v. Accused Sec. 420','Criminal','Priya Nair','58')"><td><div class="case-id">CRM/2024/0317</div></td><td><div class="case-title">State v. Accused Sec. 420</div><div class="case-client">Priya Nair</div></td><td><span class="tag tag-criminal">Criminal</span></td><td style="font-size:12px;color:var(--text-muted)">Sessions Court</td><td><span class="status-badge status-active">Active</span></td><td>02 Jun</td><td><span style="font-weight:600;color:var(--warning)">58%</span></td><td><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();showPage('predict',null)">Predict</button></td></tr>
+            <tr onclick="openDrawer('FAM/2024/0156','Divorce Petition','Family','Anita Verma','82')"><td><div class="case-id">FAM/2024/0156</div></td><td><div class="case-title">Divorce Petition – Mutual Consent</div><div class="case-client">Anita Verma</div></td><td><span class="tag tag-family">Family</span></td><td style="font-size:12px;color:var(--text-muted)">Family Court</td><td><span class="status-badge status-pending">Pending</span></td><td>10 Jun</td><td><span style="font-weight:600;color:var(--success)">82%</span></td><td><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();showPage('predict',null)">Predict</button></td></tr>
+            <tr onclick="openDrawer('LAB/2024/0499','Wrongful Termination','Labour','Suresh Pillai','61')"><td><div class="case-id">LAB/2024/0499</div></td><td><div class="case-title">Wrongful Termination – ABC Corp</div><div class="case-client">Suresh Pillai</div></td><td><span class="tag tag-labour">Labour</span></td><td style="font-size:12px;color:var(--text-muted)">Labour Tribunal</td><td><span class="status-badge status-active">Active</span></td><td>15 Jun</td><td><span style="font-weight:600;color:var(--warning)">61%</span></td><td><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();showPage('predict',null)">Predict</button></td></tr>
+            <tr onclick="openDrawer('CRM/2025/0012','Cyber Fraud Complaint','Criminal','Meera Iyer','69')"><td><div class="case-id">CRM/2025/0012</div></td><td><div class="case-title">Cyber Fraud Complaint</div><div class="case-client">Meera Iyer</div></td><td><span class="tag tag-criminal">Criminal</span></td><td style="font-size:12px;color:var(--text-muted)">Sessions Court</td><td><span class="status-badge status-active">Active</span></td><td>20 Jun</td><td><span style="font-weight:600;color:var(--warning)">69%</span></td><td><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();showPage('predict',null)">Predict</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ HEARINGS ══ -->
+  <div class="page" id="page-hearings">
+    <div class="page-body">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Hearing Schedule</div><button class="btn btn-primary btn-sm" onclick="showToast('Schedule new hearing')">+ Schedule</button></div>
+        <table><thead><tr><th>Date & Time</th><th>Case</th><th>Court</th><th>Type</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><strong>27 May 2025</strong><br><span style="font-size:11px;color:var(--text-muted)">10:30 AM</span></td><td><div class="case-title">Property Dispute vs. Mehta Bros</div><div class="case-client">CIV/2024/0841</div></td><td style="font-size:12px">Madras HC · Room 4</td><td><span class="tag tag-civil">Civil</span></td><td><span class="status-badge status-hearing">Upcoming</span></td><td><button class="btn btn-ghost btn-sm" onclick="showToast('Hearing details opened')">View</button></td></tr>
+          <tr><td><strong>02 Jun 2025</strong><br><span style="font-size:11px;color:var(--text-muted)">2:00 PM</span></td><td><div class="case-title">State v. Accused Sec. 420</div><div class="case-client">CRM/2024/0317</div></td><td style="font-size:12px">Sessions · Room 11</td><td><span class="tag tag-criminal">Criminal</span></td><td><span class="status-badge status-active">Confirmed</span></td><td><button class="btn btn-ghost btn-sm" onclick="showToast('Hearing details opened')">View</button></td></tr>
+          <tr><td><strong>10 Jun 2025</strong><br><span style="font-size:11px;color:var(--text-muted)">11:00 AM</span></td><td><div class="case-title">Divorce Petition – Mutual Consent</div><div class="case-client">FAM/2024/0156</div></td><td style="font-size:12px">Family Court · Room 2</td><td><span class="tag tag-family">Family</span></td><td><span class="status-badge status-pending">Tentative</span></td><td><button class="btn btn-ghost btn-sm" onclick="showToast('Hearing details opened')">View</button></td></tr>
+        </tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ DOCUMENTS ══ -->
+  <div class="page" id="page-documents">
+    <div class="page-body">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Document Repository</div><button class="btn btn-primary btn-sm" onclick="showToast('Upload dialog opened')">+ Upload</button></div>
+        <table><thead><tr><th>Document</th><th>Case</th><th>Type</th><th>Uploaded</th><th>Size</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><div class="case-title">Vakalatnama_Kumar.pdf</div></td><td><div class="case-client">CIV/2024/0841</div></td><td>Vakalatnama</td><td>24 May 2025</td><td>1.2 MB</td><td><button class="btn btn-ghost btn-sm" onclick="showToast('Downloading…')">⬇ Download</button></td></tr>
+          <tr><td><div class="case-title">Chargesheet_420.pdf</div></td><td><div class="case-client">CRM/2024/0317</div></td><td>Chargesheet</td><td>22 May 2025</td><td>3.4 MB</td><td><button class="btn btn-ghost btn-sm" onclick="showToast('Downloading…')">⬇ Download</button></td></tr>
+          <tr><td><div class="case-title">Marriage_Certificate.jpg</div></td><td><div class="case-client">FAM/2024/0156</div></td><td>Certificate</td><td>20 May 2025</td><td>800 KB</td><td><button class="btn btn-ghost btn-sm" onclick="showToast('Downloading…')">⬇ Download</button></td></tr>
+          <tr><td><div class="case-title">Property_Deed_Original.pdf</div></td><td><div class="case-client">CIV/2024/0841</div></td><td>Evidence</td><td>15 Jan 2024</td><td>5.1 MB</td><td><button class="btn btn-ghost btn-sm" onclick="showToast('Downloading…')">⬇ Download</button></td></tr>
+        </tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CLIENTS ══ -->
+  <div class="page" id="page-clients">
+    <div class="page-body">
+      <div class="panel">
+        <div class="panel-header"><div class="panel-title">Client Registry</div><button class="btn btn-primary btn-sm" onclick="showToast('Add client form opened')">+ Add Client</button></div>
+        <table><thead><tr><th>Name</th><th>Phone</th><th>Cases</th><th>Since</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><div class="case-title">Rajesh Kumar</div></td><td>+91 98765 43210</td><td>2 active</td><td>Jan 2024</td><td><span class="status-badge status-active">Active</span></td><td><button class="btn btn-ghost btn-sm" onclick="showToast('Client profile opened')">View</button></td></tr>
+          <tr><td><div class="case-title">Priya Nair</div></td><td>+91 87654 32109</td><td>1 active</td><td>Mar 2024</td><td><span class="status-badge status-active">Active</span></td><td><button class="btn btn-ghost btn-sm" onclick="showToast('Client profile opened')">View</button></td></tr>
+          <tr><td><div class="case-title">Anita Verma</div></td><td>+91 76543 21098</td><td>1 pending</td><td>Dec 2023</td><td><span class="status-badge status-pending">Pending</span></td><td><button class="btn btn-ghost btn-sm" onclick="showToast('Client profile opened')">View</button></td></tr>
+          <tr><td><div class="case-title">Suresh Pillai</div></td><td>+91 65432 10987</td><td>1 active</td><td>Apr 2024</td><td><span class="status-badge status-active">Active</span></td><td><button class="btn btn-ghost btn-sm" onclick="showToast('Client profile opened')">View</button></td></tr>
+        </tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SETTINGS ══ -->
+  <div class="page" id="page-settings">
+    <div class="page-body">
+      <div class="panel" style="max-width:540px">
+        <div class="panel-header"><div class="panel-title">Settings</div></div>
+        <div style="padding:22px">
+          <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" value="Adv. Aditya Sharma"></div>
+          <div class="form-group"><label class="form-label">Bar Council ID</label><input class="form-input" value="TN/ADV/2018/04521"></div>
+          <div class="form-group"><label class="form-label">Email</label><input class="form-input" value="adv.sharma@court.in"></div>
+          <div class="form-group"><label class="form-label">Court Jurisdiction</label><select class="form-select"><option>Madras High Court</option><option>Supreme Court</option></select></div>
+          <button class="btn btn-primary" onclick="showToast('Settings saved')">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODALS ══ -->
+<div class="modal-backdrop" id="newCaseModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">Register New Case</div><span class="modal-close" onclick="closeModal('newCaseModal')">✕</span></div>
+    <div class="modal-body">
+      <div class="form-row"><div class="form-group"><label class="form-label">Case Type</label><select class="form-select"><option>Civil</option><option>Criminal</option><option>Family</option><option>Labour</option><option>Consumer</option><option>Writ / PIL</option></select></div><div class="form-group"><label class="form-label">Court</label><select class="form-select"><option>Madras High Court</option><option>City Sessions Court</option><option>Family Court, Chennai</option><option>District Court, Coimbatore</option></select></div></div>
+      <div class="form-group"><label class="form-label">Case Title</label><input class="form-input" placeholder="e.g. Property Dispute vs. Mehta Bros"></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Client Name</label><input class="form-input" placeholder="Full name"></div><div class="form-group"><label class="form-label">Client Phone</label><input class="form-input" placeholder="+91 98765 43210"></div></div>
+      <div class="form-row"><div class="form-group"><label class="form-label">Filing Date</label><input class="form-input" type="date"></div><div class="form-group"><label class="form-label">Priority</label><select class="form-select"><option>High</option><option>Medium</option><option>Low</option></select></div></div>
+      <div class="form-group"><label class="form-label">Case Summary</label><textarea class="form-textarea" placeholder="Brief description…"></textarea></div>
+      <div class="form-group"><label class="form-label">Upload Documents</label><input class="form-input" type="file" multiple></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeModal('newCaseModal')">Cancel</button><button class="btn btn-primary" onclick="submitCase()">Register Case</button></div>
+  </div>
+</div>
+
+<!-- ══ CASE DRAWER ══ -->
+<div class="drawer-backdrop" id="drawerBackdrop" onclick="closeDrawer()"></div>
+<div class="drawer" id="caseDrawer">
+  <div class="drawer-header">
+    <div>
+      <div style="font-size:11.5px;color:var(--text-light);margin-bottom:3px" id="drawerCaseId"></div>
+      <div style="font-family:'DM Serif Display',serif;font-size:18px" id="drawerTitle"></div>
+      <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+        <span class="status-badge status-hearing" id="drawerStatus">Hearing</span>
+        <span id="drawerWin" style="font-size:12px;font-weight:600;color:var(--success)"></span>
+      </div>
+    </div>
+    <span style="cursor:pointer;font-size:19px;color:var(--text-light)" onclick="closeDrawer()">✕</span>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-section">
+      <div class="drawer-section-title">Case Details</div>
+      <div class="detail-row"><span class="detail-key">Client</span><span class="detail-value" id="drawerClient"></span></div>
+      <div class="detail-row"><span class="detail-key">Court</span><span class="detail-value">Madras High Court</span></div>
+      <div class="detail-row"><span class="detail-key">Type</span><span class="detail-value" id="drawerType"></span></div>
+      <div class="detail-row"><span class="detail-key">Filing Date</span><span class="detail-value">14 Jan 2024</span></div>
+      <div class="detail-row"><span class="detail-key">Next Hearing</span><span class="detail-value" style="color:var(--warning)">27 May 2025 · 10:30 AM</span></div>
+      <div class="detail-row"><span class="detail-key">Advocate</span><span class="detail-value">Adv. A. Sharma</span></div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-title">AI Win Analysis</div>
+      <div id="drawerWinAnalysis" style="background:var(--navy);border-radius:10px;padding:14px 16px;color:rgba(255,255,255,.8);font-size:12.5px;line-height:1.6">Loading AI analysis…</div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-title">Activity Timeline</div>
+      <div class="timeline-item"><div class="timeline-dot"></div><div><div class="timeline-text">Hearing scheduled for 27 May 2025</div><div class="timeline-date">23 May 2025</div></div></div>
+      <div class="timeline-item"><div class="timeline-dot" style="background:var(--gold-dim)"></div><div><div class="timeline-text">Vakalatnama submitted</div><div class="timeline-date">24 May 2025</div></div></div>
+      <div class="timeline-item"><div class="timeline-dot" style="background:var(--text-light)"></div><div><div class="timeline-text">Previous hearing adjourned – both parties present</div><div class="timeline-date">10 Apr 2025</div></div></div>
+      <div class="timeline-item"><div class="timeline-dot" style="background:var(--text-light)"></div><div><div class="timeline-text">Case registered & admitted</div><div class="timeline-date">14 Jan 2024</div></div></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-primary" style="flex:1" onclick="showToast('Schedule hearing opened')">Schedule Hearing</button>
+      <button class="btn btn-ai" style="flex:1" onclick="closeDrawer();showPage('predict',null)">🎯 Predict Win</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ AI CHAT ══ -->
+<button class="chat-fab" id="chatFab" onclick="toggleChat()">⚡<div class="badge"></div></button>
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-header">
+    <div class="chat-avatar">⚖</div>
+    <div class="chat-header-info"><div class="chat-name">JurisAI</div><div class="chat-status">AI Legal Assistant · Online</div></div>
+    <span class="chat-close" onclick="toggleChat()">✕</span>
+  </div>
+  <div class="chat-messages" id="chatMessages">
+    <div class="chat-msg bot"><div class="msg-bubble">Hello! I'm JurisAI, your AI-powered legal assistant. I can help you analyze cases, check legal precedents, draft strategies, and answer questions about Indian law. How can I help you today?</div><div class="msg-time">Now</div></div>
+  </div>
+  <div class="chat-suggestions" id="chatSuggestions">
+    <div class="chat-suggestion" onclick="sendSuggestion(this)">Summarize my active cases</div>
+    <div class="chat-suggestion" onclick="sendSuggestion(this)">Latest IPC Section 420 precedents</div>
+    <div class="chat-suggestion" onclick="sendSuggestion(this)">How to strengthen a property case?</div>
+    <div class="chat-suggestion" onclick="sendSuggestion(this)">Draft a hearing strategy</div>
+  </div>
+  <div class="chat-input-wrap">
+    <input class="chat-input" id="chatInput" placeholder="Ask anything about your cases…" onkeydown="if(event.key==='Enter')sendChat()">
+    <button class="chat-send" onclick="sendChat()">➤</button>
+  </div>
+</div>
+
+<!-- ══ TOAST ══ -->
+<div class="toast" id="toast"><span class="tick">✓</span><span id="toastMsg"></span></div>
+
+<script>
+const CASES = [
+  {id:'CIV/2024/0841',title:'Property Dispute vs. Mehta Bros',type:'Civil',client:'Rajesh Kumar',status:'Hearing',win:'74'},
+  {id:'CRM/2024/0317',title:'State v. Accused Sec. 420',type:'Criminal',client:'Priya Nair',status:'Active',win:'58'},
+  {id:'FAM/2024/0156',title:'Divorce Petition – Mutual Consent',type:'Family',client:'Anita Verma',status:'Pending',win:'82'},
+  {id:'LAB/2024/0499',title:'Wrongful Termination – ABC Corp',type:'Labour',client:'Suresh Pillai',status:'Active',win:'61'},
+  {id:'CRM/2025/0012',title:'Cyber Fraud Complaint',type:'Criminal',client:'Meera Iyer',status:'Active',win:'69'},
+  {id:'CIV/2023/0722',title:'Land Acquisition Appeal',type:'Civil',client:'Farmers Union',status:'Closed',win:'91'},
+];
+
+// ── LOGIN ──
+function selectRole(el,role){document.querySelectorAll('.role-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');document.getElementById('loginBtn').textContent='Sign In as '+role}
+function doLogin(){const lp=document.getElementById('loginPage');lp.style.opacity='0';lp.style.transition='opacity .35s';setTimeout(()=>{lp.style.display='none';initCharts()},350)}
+
+// ── NAV ──
+function showPage(page,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  if(el){document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));el.classList.add('active')}
+  const titles={dashboard:'Dashboard',cases:'Case Management',hearings:'Hearing Schedule',documents:'Document Repository',analytics:'Analytics & Insights',predict:'Win Probability Predictor',lawyers:'Find Lawyers (AI)',clients:'Client Registry',settings:'Settings'};
+  document.getElementById('pageTitle').textContent=titles[page]||page;
+  if(page==='analytics')setTimeout(initCharts,100);
+}
+
+// ── SEARCH ──
+function doSearch(q){
+  const res=document.getElementById('searchResults');
+  if(!q||q.length<2){res.classList.remove('open');return}
+  const matches=CASES.filter(c=>c.title.toLowerCase().includes(q.toLowerCase())||c.id.toLowerCase().includes(q.toLowerCase())||c.client.toLowerCase().includes(q.toLowerCase()));
+  if(!matches.length){res.innerHTML='<div style="padding:12px 14px;font-size:13px;color:var(--text-muted)">No results found</div>';res.classList.add('open');return}
+  res.innerHTML=matches.map(c=>`<div class="search-result-item" onclick="openDrawer('${c.id}','${c.title}','${c.type}','${c.client}','${c.win}')"><span class="sri-id">${c.id}</span><span class="sri-title">${c.title}</span><span class="sri-type tag tag-${c.type.toLowerCase()}">${c.type}</span></div>`).join('');
+  res.classList.add('open');
+}
+function closeSearch(){document.getElementById('searchResults').classList.remove('open')}
+
+// ── TABS ──
+function filterTab(el){document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active'));el.classList.add('active')}
+
+// ── MODAL ──
+function openNewCaseModal(){document.getElementById('newCaseModal').classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function submitCase(){closeModal('newCaseModal');showToast('Case registered successfully!')}
+
+// ── DRAWER ──
+function openDrawer(id,title,type,client,win){
+  document.getElementById('drawerCaseId').textContent=id;
+  document.getElementById('drawerTitle').textContent=title||id;
+  document.getElementById('drawerType').textContent=type||'Civil';
+  document.getElementById('drawerClient').textContent=client||'—';
+  document.getElementById('drawerWin').textContent=win?'AI Win Probability: '+win+'%':'';
+  document.getElementById('drawerBackdrop').classList.add('open');
+  document.getElementById('caseDrawer').classList.add('open');
+  loadDrawerAI(title,type,win);
+}
+function closeDrawer(){document.getElementById('drawerBackdrop').classList.remove('open');document.getElementById('caseDrawer').classList.remove('open')}
+
+async function loadDrawerAI(title,type,win){
+  const el=document.getElementById('drawerWinAnalysis');
+  el.innerHTML='<div style="color:rgba(255,255,255,.4);font-size:12px">⚡ Analysing case with AI…</div>';
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'You are JurisAI, an Indian legal case assistant. Give a brief 3-sentence win probability analysis in plain text. Mention the win probability percentage given, 1-2 key strengths, and 1 risk. Be concise and practical.',messages:[{role:'user',content:`Case: "${title}", Type: ${type}, AI Win Probability: ${win}%. Give a brief strategic analysis.`}]})});
+    const d=await r.json();
+    el.innerHTML=`<div style="font-size:12.5px;line-height:1.65;color:rgba(255,255,255,.82)">${d.content[0].text}</div>`;
+  }catch(e){el.innerHTML=`<div style="color:rgba(255,255,255,.5);font-size:12px">Win probability: ${win}% based on case type and evidence patterns.</div>`}
+}
+
+// ── WIN PREDICTOR ──
+async function runPrediction(){
+  const type=document.getElementById('pred-type').value;
+  const court=document.getElementById('pred-court').value;
+  const evidence=document.getElementById('pred-evidence').value;
+  const hearings=document.getElementById('pred-hearings').value;
+  const summary=document.getElementById('pred-summary').value;
+  if(!type||!court||!evidence){showToast('Please fill in all required fields');return}
+  const card=document.getElementById('winProbContent');
+  card.innerHTML=`<div class="wpc-loading"><div class="wpc-spinner"></div><br>Analysing case with AI…</div>`;
+  document.getElementById('lawyerSuggestContent').innerHTML=`<div style="text-align:center;padding:16px"><span class="lawyer-spinner"></span>Finding matched lawyers…</div>`;
+  try{
+    const prompt=`You are an Indian legal AI. A lawyer wants to predict the win probability for this case.
+Case Type: ${type}
+Court: ${court}
+Evidence: ${evidence}
+Hearings: ${hearings}
+${summary?'Summary: '+summary:''}
+
+Respond ONLY with JSON (no markdown, no backticks):
+{
+  "probability": <integer 0-100>,
+  "verdict": "<2 sentence overall assessment>",
+  "factors": ["<positive factor 1>","<positive factor 2>","<risk factor>"],
+  "lawyers": [
+    {"name":"<Indian advocate name>","specialization":"<area>","experience":"<X years>","wins":"<X%> win rate","match":"<XX%>","initials":"<2 letters>","color":"blue"},
+    {"name":"<Indian advocate name>","specialization":"<area>","experience":"<X years>","wins":"<X%> win rate","match":"<XX%>","initials":"<2 letters>","color":"green"},
+    {"name":"<Indian advocate name>","specialization":"<area>","experience":"<X years>","wins":"<X%> win rate","match":"<XX%>","initials":"<2 letters>","color":"purple"}
+  ]
+}`;
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const d=await r.json();
+    let text=d.content[0].text.replace(/```json|```/g,'').trim();
+    const data=JSON.parse(text);
+    renderWinProb(data);
+    renderLawyerSuggest(data.lawyers);
+  }catch(e){
+    card.innerHTML=`<div style="color:rgba(255,255,255,.5);font-size:13px;text-align:center;padding:20px 0">Could not complete prediction. Please try again.</div>`;
+    document.getElementById('lawyerSuggestContent').innerHTML=`<div style="text-align:center;padding:16px;color:var(--text-muted)">Run prediction to see lawyer matches.</div>`;
+  }
+}
+
+function renderWinProb(data){
+  const pct=data.probability;
+  const color=pct>=70?'#6ec97a':pct>=50?'#e8c97a':'#e87a7a';
+  document.getElementById('winProbContent').innerHTML=`
+    <div class="wpc-score-row"><div class="wpc-score" style="color:${color}">${pct}</div><div class="wpc-pct">%</div></div>
+    <div class="wpc-verdict">${data.verdict}</div>
+    <div class="wpc-bar-wrap"><div class="wpc-bar" style="width:${pct}%;background:linear-gradient(90deg,${color}88,${color})"></div></div>
+    <div class="wpc-factors">${data.factors.map((f,i)=>`<div class="wpc-factor"><div class="wpc-factor-dot" style="background:${i<2?'#6ec97a':'#e87a7a'}"></div>${f}</div>`).join('')}</div>`;
+}
+
+function renderLawyerSuggest(lawyers){
+  const colorMap={blue:'la-blue',green:'la-green',purple:'la-purple',amber:'la-amber'};
+  document.getElementById('lawyerSuggestContent').innerHTML=lawyers.map(l=>`
+    <div class="lawyer-card">
+      <div class="lawyer-avatar ${colorMap[l.color]||'la-blue'}">${l.initials}</div>
+      <div class="lawyer-info">
+        <div class="lname">${l.name}</div>
+        <div class="lspec">${l.specialization}</div>
+        <div class="lstats"><span class="lstat"><strong>${l.experience}</strong></span><span class="lstat">·</span><span class="lstat"><strong>${l.wins}</strong></span></div>
+      </div>
+      <div class="lawyer-match"><div class="match-pct">${l.match}</div><div class="match-label">Match</div></div>
+    </div>`).join('');
+}
+
+// ── FIND LAWYERS ──
+async function findLawyers(){
+  const type=document.getElementById('lawyer-type').value;
+  const city=document.getElementById('lawyer-city').value;
+  const exp=document.getElementById('lawyer-exp').value;
+  const el=document.getElementById('lawyerResults');
+  el.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-muted)"><span class="lawyer-spinner"></span>Finding AI-matched lawyers…</div>`;
+  try{
+    const prompt=`Generate a list of 6 realistic Indian advocate profiles for ${city||'Chennai'} specializing in ${type||'general'} law with ${exp||'any'} experience. Return ONLY JSON array (no markdown):
+[{"name":"<name>","specialization":"<specific area>","experience":"<X> years","wins":"<XX>% win rate","cases":"<XX> cases handled","court":"<primary court>","match":"<XX>%","initials":"<2 letters>","color":"blue|green|purple|amber","fee":"₹<X>K–<Y>K per hearing"}]`;
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const d=await r.json();
+    let text=d.content[0].text.replace(/```json|```/g,'').trim();
+    const lawyers=JSON.parse(text);
+    const colorMap={blue:'la-blue',green:'la-green',purple:'la-purple',amber:'la-amber'};
+    el.innerHTML=`<div class="panel"><div class="panel-header"><div class="panel-title">AI-Matched Advocates (${lawyers.length})</div><div style="font-size:12px;color:var(--text-light)">Ranked by match score</div></div><div style="padding:4px 20px">${lawyers.map(l=>`
+      <div class="lawyer-card">
+        <div class="lawyer-avatar ${colorMap[l.color]||'la-blue'}">${l.initials}</div>
+        <div class="lawyer-info">
+          <div class="lname">${l.name}</div>
+          <div class="lspec">${l.specialization}</div>
+          <div class="lstats"><span class="lstat"><strong>${l.experience}</strong></span><span class="lstat">·</span><span class="lstat">${l.wins}</span><span class="lstat">·</span><span class="lstat">${l.cases}</span></div>
+          <div style="font-size:11px;color:var(--text-light);margin-top:3px">${l.court} · ${l.fee}</div>
+        </div>
+        <div class="lawyer-match"><div class="match-pct">${l.match}</div><div class="match-label">Match</div></div>
+      </div>`).join('')}</div></div>`;
+  }catch(e){el.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text-muted)">Could not fetch results. Please try again.</div>`}
+}
+
+// ── CHAT ──
+let chatOpen=false;
+function toggleChat(){chatOpen=!chatOpen;document.getElementById('chatPanel').classList.toggle('open',chatOpen)}
+function openChat(){chatOpen=true;document.getElementById('chatPanel').classList.add('open')}
+
+const chatHistory=[];
+
+async function sendChat(){
+  const input=document.getElementById('chatInput');
+  const msg=input.value.trim();
+  if(!msg)return;
+  input.value='';
+  addChatMsg('user',msg);
+  document.getElementById('chatSuggestions').style.display='none';
+  addTyping();
+  chatHistory.push({role:'user',content:msg});
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'You are JurisAI, an expert Indian legal assistant built into JurisDesk, a legal case tracking platform. You help advocates with case strategy, Indian law (IPC, CPC, CrPC, IEA, etc.), precedents, hearing prep, and document drafting. Be concise, practical, and professional. Format responses clearly.',messages:chatHistory})});
+    const d=await r.json();
+    const reply=d.content.map(c=>c.text||'').join('');
+    removeTyping();
+    addChatMsg('bot',reply);
+    chatHistory.push({role:'assistant',content:reply});
+  }catch(e){removeTyping();addChatMsg('bot','I\'m having trouble connecting. Please try again in a moment.')}
+}
+
+function sendSuggestion(el){document.getElementById('chatInput').value=el.textContent;sendChat()}
+
+function addChatMsg(role,text){
+  const msgs=document.getElementById('chatMessages');
+  const now=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const div=document.createElement('div');
+  div.className=`chat-msg ${role} fade-up`;
+  div.innerHTML=`<div class="msg-bubble">${text.replace(/\n/g,'<br>')}</div><div class="msg-time">${now}</div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+function addTyping(){
+  const msgs=document.getElementById('chatMessages');
+  const div=document.createElement('div');
+  div.className='chat-msg bot';div.id='typingIndicator';
+  div.innerHTML='<div class="chat-typing"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+}
+function removeTyping(){const t=document.getElementById('typingIndicator');if(t)t.remove()}
+
+// ── CHARTS ──
+let chartsInited=false;
+function initCharts(){
+  if(chartsInited)return;chartsInited=true;
+  const navy='#0f1c2e',gold='#c9a84c',cream='#f5f0e8';
+  const defaults={plugins:{legend:{display:false}},scales:{x:{grid:{color:'#e8e0d0'},ticks:{color:'#8a9ab0',font:{size:11}}},y:{grid:{color:'#e8e0d0'},ticks:{color:'#8a9ab0',font:{size:11}}}}};
+
+  new Chart(document.getElementById('chartType'),{type:'doughnut',data:{labels:['Civil','Criminal','Family','Labour','Consumer'],datasets:[{data:[8,6,4,4,2],backgroundColor:['#1a4a7a','#8a2020','#5a2080','#206020','#802060'],borderWidth:0,hoverOffset:4}]},options:{plugins:{legend:{display:true,position:'right',labels:{font:{size:11},color:'#5a6a80',boxWidth:12}}},cutout:'65%'}});
+
+  new Chart(document.getElementById('chartMonthly'),{type:'bar',data:{labels:['Jan','Feb','Mar','Apr','May'],datasets:[{label:'Filings',data:[4,7,5,9,6],backgroundColor:navy,borderRadius:6,borderSkipped:false}]},options:{...defaults,plugins:{legend:{display:false}}}});
+
+  new Chart(document.getElementById('chartWinRate'),{type:'bar',data:{labels:['Civil','Criminal','Family','Labour','Consumer'],datasets:[{data:[76,58,84,65,72],backgroundColor:[gold,gold,gold,gold,gold],borderRadius:6,borderSkipped:false}]},options:{...defaults,plugins:{legend:{display:false}},scales:{...defaults.scales,y:{...defaults.scales.y,max:100}}}});
+
+  new Chart(document.getElementById('chartStatus'),{type:'doughnut',data:{labels:['Active','Hearing','Pending','Closed'],datasets:[{data:[10,3,4,7],backgroundColor:['#1a4a7a','#9a6e10','#5a3a9a','#1a6b3c'],borderWidth:0}]},options:{plugins:{legend:{display:true,position:'right',labels:{font:{size:11},color:'#5a6a80',boxWidth:12}}},cutout:'60%'}});
+}
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg){const t=document.getElementById('toast');document.getElementById('toastMsg').textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2600)}
+</script>
+</body>
+</html>
