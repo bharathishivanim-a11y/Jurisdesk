@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Legal Case Tracking System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- AUTH / LOGIN & REGISTRATION SECTION -->
+  <div id="loginSection" class="auth-container">
+    <div class="auth-card">
+      <div class="brand-logo">⚖️</div>
+      <h1>Legal Case Track</h1>
+      <p class="subtitle">Digital Legal Case Management System</p>
+
+      <!-- Role Selector -->
+      <div class="role-selector">
+        <label>Portal Access Role</label>
+        <div class="role-options">
+          <button type="button" class="role-btn active" id="btnRoleAdvocate" onclick="setRole('advocate')">
+            👨‍⚖️ Advocate Portal
+          </button>
+          <button type="button" class="role-btn" id="btnRoleClient" onclick="setRole('client')">
+            👤 Client Portal
+          </button>
+        </div>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="loginEmail" placeholder="e.g. rajesh@legal.com" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPassword" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Login to Portal</button>
+        <p class="auth-switch">Need an account? <a href="#" onclick="toggleAuthMode('register')">Register New Person</a></p>
+      </form>
+
+      <!-- Registration Form (Hidden by default) -->
+      <form id="registerForm" style="display: none;">
+        <div class="form-group">
+          <label>Full Name (Exact Name used in cases)</label>
+          <input type="text" id="regName" placeholder="e.g. Ramesh Kumar" required>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="regEmail" placeholder="e.g. ramesh@gmail.com" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="regPassword" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-gold" style="width: 100%;">Create Account</button>
+        <p class="auth-switch">Already registered? <a href="#" onclick="toggleAuthMode('login')">Back to Login</a></p>
+      </form>
+
+      <!-- Demo Accounts Quick Reference -->
+      <div class="demo-box">
+        <strong>🔑 Hardcoded Demo Accounts (Pass: 123)</strong>
+        <div style="font-size: 0.8rem; margin-top: 5px;">
+          • Advocate: <code>rajesh@legal.com</code><br>
+          • Client 1: <code>ramesh@gmail.com</code> (2 Cases)<br>
+          • Client 2: <code>ananya@gmail.com</code> (1 Case)
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MAIN DASHBOARD -->
+  <div id="appSection" class="app-wrapper" style="display: none;">
+    <header class="navbar">
+      <div class="nav-brand">
+        <div class="logo-box">⚖️</div>
+        <div>
+          <h2 id="portalHeading">LegalCase Track</h2>
+          <small id="userWelcomeBadge">Logged in user</small>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <button id="addCaseBtn" class="btn btn-gold" onclick="openAddModal()">+ Add New Case</button>
+        <button class="btn btn-outline" onclick="logout()">Logout</button>
+      </div>
+    </header>
+
+    <main class="dashboard-body">
+      <!-- Stats Summary -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <div><span class="stat-title">TOTAL CASES</span><h2 id="statTotal">0</h2></div>
+          <div class="stat-icon icon-blue">💼</div>
+        </div>
+        <div class="stat-card">
+          <div><span class="stat-title">PENDING HEARING</span><h2 id="statPending" class="text-warning">0</h2></div>
+          <div class="stat-icon icon-yellow">⏳</div>
+        </div>
+        <div class="stat-card">
+          <div><span class="stat-title">IN PROGRESS</span><h2 id="statInProgress" class="text-info">0</h2></div>
+          <div class="stat-icon icon-cyan">⚡</div>
+        </div>
+        <div class="stat-card">
+          <div><span class="stat-title">CLOSED CASES</span><h2 id="statClosed" class="text-success">0</h2></div>
+          <div class="stat-icon icon-green">✅</div>
+        </div>
+      </section>
+
+      <!-- Search & Filters -->
+      <section class="controls-card">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Search by Case No., Title, Court..." onkeyup="filterCases()">
+        </div>
+        <div class="filter-actions">
+          <select id="statusFilter" onchange="filterCases()">
+            <option value="All">All Statuses</option>
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Closed">Closed</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Active Cases Table -->
+      <section class="table-card">
+        <div class="table-header">
+          <h3 id="tableTitle">📂 Active Cases Directory</h3>
+          <span id="caseCountBadge" class="count-badge">Showing 0 cases</span>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>CASE NO.</th>
+                <th>TITLE</th>
+                <th>CLIENT NAME</th>
+                <th>ADVOCATE NAME</th>
+                <th>COURT</th>
+                <th>STATUS</th>
+                <th>NEXT HEARING</th>
+                <th class="action-col">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody id="caseTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ADD/EDIT MODAL -->
+  <div id="caseModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add New Legal Case</h3>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <form id="caseForm">
+        <input type="hidden" id="editCaseId">
+        <div class="form-group">
+          <label>Case Number</label>
+          <input type="text" id="caseNumber" placeholder="e.g. HC/2026/104" required>
+        </div>
+        <div class="form-group">
+          <label>Case Title</label>
+          <input type="text" id="title" placeholder="e.g. Property Dispute" required>
+        </div>
+        <div class="form-group">
+          <label>Client Name</label>
+          <input type="text" id="clientName" placeholder="e.g. Ramesh Kumar" required>
+        </div>
+        <div class="form-group">
+          <label>Advocate Name</label>
+          <input type="text" id="advocateName" placeholder="e.g. Adv. Rajesh Sharma" required>
+        </div>
+        <div class="form-group">
+          <label>Court Name</label>
+          <input type="text" id="court" placeholder="e.g. High Court of Karnataka" required>
+        </div>
+        <div class="form-group">
+          <label>Case Status</label>
+          <select id="status">
+            <option value="Pending">Pending</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Closed">Closed</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Next Hearing Date</label>
+          <input type="date" id="nextHearingDate" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" style="color:#334155;" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Case</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
